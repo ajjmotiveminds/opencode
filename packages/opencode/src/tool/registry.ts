@@ -1,4 +1,5 @@
 import { BashTool } from "./bash"
+import { BashTmuxTool } from "./bash-tmux"
 import { EditTool } from "./edit"
 import { GlobTool } from "./glob"
 import { GrepTool } from "./grep"
@@ -10,6 +11,7 @@ import { TodoWriteTool, TodoReadTool } from "./todo"
 import { WebFetchTool } from "./webfetch"
 import { WriteTool } from "./write"
 import { InvalidTool } from "./invalid"
+import { Tmux } from "../exec/tmux-config"
 import type { Agent } from "../agent/agent"
 import { Tool } from "./tool"
 import { Instance } from "../project/instance"
@@ -74,9 +76,13 @@ export namespace ToolRegistry {
 
   async function all(): Promise<Tool.Info[]> {
     const custom = await state().then((x) => x.custom)
+    
+    // Use tmux tool if enabled, otherwise use standard bash tool
+    const bashTool = Tmux.isEnabled() ? BashTmuxTool : BashTool
+    
     return [
       InvalidTool,
-      BashTool,
+      bashTool,
       EditTool,
       WebFetchTool,
       GlobTool,
