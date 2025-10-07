@@ -48,11 +48,13 @@ export namespace CmdOutputMetadata {
    * Find all PS1 metadata blocks in output
    */
   export function matchesPs1Metadata(content: string): RegExpMatchArray[] {
+    // Don't trim the markers - we need the newlines for proper matching
+    const normalized = content.replace(/\r/g, "")
     const pattern = new RegExp(
-      `^${escapeRegex(PS1_BEGIN.trim())}(.*?)${escapeRegex(PS1_END.trim())}`,
+      `${escapeRegex(PS1_BEGIN)}(.*?)${escapeRegex(PS1_END)}`,
       "gms"
     )
-    return Array.from(content.matchAll(pattern))
+    return Array.from(normalized.matchAll(pattern))
   }
 
   /**

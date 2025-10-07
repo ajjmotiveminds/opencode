@@ -151,8 +151,9 @@ export class TmuxService {
   async capturePaneContent(paneId: string): Promise<string> {
     try {
       const result = await $`tmux -S ${this.config.socket} capture-pane -J -p -S - -t ${paneId}`.text()
+      const normalized = result.replace(/\r/g, "")
       // Join lines and remove trailing whitespace from each line to avoid double newlines
-      return result
+      return normalized
         .split("\n")
         .map(line => line.trimEnd())
         .join("\n")

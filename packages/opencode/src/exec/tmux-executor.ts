@@ -108,6 +108,8 @@ export class TmuxExecutor implements CommandExecutor {
           log.info("Sending command", { original: cmd, escaped: escapedCmd, isSpecialKey })
           
           await this.service.sendCommand(paneId, escapedCmd, !isSpecialKey)
+          // Give bash a moment to start executing the command
+          await Bun.sleep(100)
         }
 
         const startTime = Date.now()
@@ -142,9 +144,9 @@ export class TmuxExecutor implements CommandExecutor {
 
           // Check if command completed (new PS1 prompt appeared)
           if (currentPs1Count > initialPs1Count || 
-              currentContent.trim().endsWith(CmdOutputMetadata.PS1_END.trim())) {
+              currentContent.endsWith(CmdOutputMetadata.PS1_END)) {
             
-            log.info("Command completed", { currentPs1Count, initialPs1Count })
+            log.info("Command completed", { currentPs1Count, initialPs1Count, endsWithPS1: currentContent.endsWith(CmdOutputMetadata.PS1_END) })
             
             // Extract metadata from last PS1 prompt
             const metadata = ps1Matches.length > 0 
@@ -164,6 +166,8 @@ export class TmuxExecutor implements CommandExecutor {
               exitCode: metadata.exitCode,
             })
           }
+
+          log.debug("Polling...", { currentPs1Count, initialPs1Count, contentLength: currentContent.length })
 
           // Check no-change timeout (only if not blocking)
           if (!blocking) {
