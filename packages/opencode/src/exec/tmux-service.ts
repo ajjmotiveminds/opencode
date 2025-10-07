@@ -110,8 +110,6 @@ export class TmuxService {
     
     log.info("Setting up PS1 prompt", { paneId, windowName })
     
-    // Set PS1 using a simpler approach - write the exact prompt value
-    // First, export variables that we'll use in PS1
     const commands = [
       `PS1='${CmdOutputMetadata.toPs1Prompt()}'`,
       `PS2=''`,
@@ -128,9 +126,7 @@ export class TmuxService {
     // Clear screen and history
     await this.clearScreen(paneId)
     await Bun.sleep(100)
-  }
-
-  /**
+  }  /**
    * Get pane ID for a window (assumes single pane per window)
    */
   async getPaneId(session: string, windowName: string): Promise<string> {

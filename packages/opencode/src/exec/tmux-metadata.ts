@@ -82,13 +82,13 @@ export namespace CmdOutputMetadata {
   function parseIntSafe(value: any, defaultValue: number): number {
     try {
       const num = parseInt(String(value), 10)
-      return isNaN(num) ? defaultValue : num
+      return Number.isNaN(num) ? defaultValue : num
     } catch {
       return defaultValue
     }
   }
 
   function escapeRegex(s: string): string {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    return s.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")
   }
 }

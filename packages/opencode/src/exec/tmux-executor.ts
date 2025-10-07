@@ -23,6 +23,7 @@ const POLL_INTERVAL = 500 // 0.5 seconds
 
 // Enable pre-command Ctrl-C by default (disable with env var)
 const PRE_CTRL_C = process.env["TMUX_PRE_CTRL_C"] !== "false"
+const CLEAR_ON_COMPLETE = process.env["TMUX_CLEAR_ON_COMPLETE"] === "true"
 
 export type TmuxExecOptions = ExecOptions & {
   /** Chat/session ID for window naming */
@@ -158,7 +159,7 @@ export class TmuxExecutor implements CommandExecutor {
 
             onExit?.(metadata.exitCode)
             
-            // Clear screen for next command
+            // Clear screen for next command to hide PS1 JSON
             await this.service.clearScreen(paneId)
             
             return resolve({
