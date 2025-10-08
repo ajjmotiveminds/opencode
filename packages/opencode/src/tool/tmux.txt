@@ -1,0 +1,112 @@
+Controls tmux sessions, windows, and panes for advanced terminal multiplexing and command execution.
+
+This tool provides direct access to tmux functionality, enabling you to:
+
+## Session Management
+- List all active tmux sessions
+- Create new sessions for organizing work
+- Kill sessions when no longer needed
+- Find sessions by name
+
+## Window Management
+- List windows within a session
+- Create new windows for different tasks
+- Kill windows when done
+- Each window can contain one or more panes
+
+## Pane Management
+- List panes within a window
+- Split panes horizontally or vertically
+- Kill panes when finished
+- Capture pane content to read terminal output
+
+## Command Execution
+- Execute commands in specific panes
+- Track command execution status
+- Support for interactive applications (use rawMode)
+- Support for TUI navigation (use noEnter for sending keys)
+
+## Use Cases
+
+### 1. Long-running processes
+Create a dedicated window/pane for long-running commands:
+```
+1. Create or find a session
+2. Create a window for the task
+3. Execute the command in that window
+4. Check status or capture output later
+```
+
+### 2. Parallel command execution
+Run multiple commands simultaneously in different panes:
+```
+1. Create/use a session
+2. Create a window
+3. Split into multiple panes
+4. Execute different commands in each pane
+5. Monitor all outputs
+```
+
+### 3. Interactive applications
+Run and interact with REPLs, editors, or TUIs:
+```
+1. Execute command with rawMode=true for REPLs
+2. Use noEnter=true to send keys without Enter for TUI navigation
+3. Capture pane content to see results
+```
+
+### 4. Debugging and monitoring
+Keep terminal output visible for debugging:
+```
+1. Execute commands in tmux panes
+2. Capture pane content anytime to check output
+3. Commands remain visible in terminal for human inspection
+```
+
+## Important Notes
+
+- Session names should be unique and descriptive
+- Window names help organize different tasks
+- Use capture-pane to read command output
+- For normal command execution, prefer the bash tool unless you need:
+  * Visibility into command execution
+  * Multiple parallel executions
+  * Interactive applications
+  * Long-running processes
+
+## Command Execution Modes
+
+### Normal Mode (default)
+- Full command tracking with OSC-133 shell integration
+- Automatic exit code detection
+- Use get-command-result to check status and output
+
+### Raw Mode (rawMode=true)
+- For interactive applications like python REPL, node, etc.
+- Disables OSC-133 tracking
+- Use capture-pane to check output
+
+### No Enter Mode (noEnter=true)
+- For TUI navigation (vim, less, btop, etc.)
+- Sends keystrokes without pressing Enter
+- Supports special keys: Up, Down, Left, Right, Escape, Tab, etc.
+- Use capture-pane to see results
+
+## Workflow Example
+
+Execute a command and monitor it:
+```
+1. list-sessions - Find or create a session
+2. create-window - Create a dedicated window
+3. execute-command - Run your command
+4. capture-pane - Read the output
+```
+
+Run parallel tasks:
+```
+1. create-window - Create a window
+2. split-pane - Split into multiple panes
+3. execute-command - Run commands in each pane
+4. capture-pane - Monitor each pane
+```
+
