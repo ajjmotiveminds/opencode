@@ -93,13 +93,13 @@ export const TmuxControlTool = Tool.define("tmux_control", {
             return {
               title: "Session Not Found",
               output: `Session not found: ${params.sessionName}`,
-              metadata: { found: false },
+              metadata: { sessions: [] },
             }
           }
           return {
             title: `Session: ${session.name}`,
             output: JSON.stringify(session, null, 2),
-            metadata: { session },
+            metadata: { sessions: [session] },
           }
         }
 
@@ -113,7 +113,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
             output: session 
               ? JSON.stringify(session, null, 2)
               : `Failed to create session: ${params.sessionName}`,
-            metadata: { session },
+            metadata: { sessions: session ? [session] : [] },
           }
         }
 
@@ -125,7 +125,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
           return {
             title: "Session Killed",
             output: `Session ${params.sessionId} has been killed`,
-            metadata: { success: true },
+            metadata: { sessions: [] },
           }
         }
 
@@ -138,7 +138,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
           return {
             title: "Tmux Windows",
             output: JSON.stringify(windows, null, 2),
-            metadata: { windows },
+            metadata: { sessions: [] },
           }
         }
 
@@ -152,7 +152,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
             output: window
               ? JSON.stringify(window, null, 2)
               : `Failed to create window: ${params.windowName}`,
-            metadata: { window },
+            metadata: { sessions: [] },
           }
         }
 
@@ -164,7 +164,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
           return {
             title: "Window Killed",
             output: `Window ${params.windowId} has been killed`,
-            metadata: { success: true },
+            metadata: { sessions: [] },
           }
         }
 
@@ -177,7 +177,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
           return {
             title: "Tmux Panes",
             output: JSON.stringify(panes, null, 2),
-            metadata: { panes },
+            metadata: { sessions: [] },
           }
         }
 
@@ -195,7 +195,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
             output: newPane
               ? JSON.stringify(newPane, null, 2)
               : `Failed to split pane ${params.paneId}`,
-            metadata: { pane: newPane },
+            metadata: { sessions: [] },
           }
         }
 
@@ -207,7 +207,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
           return {
             title: "Pane Killed",
             output: `Pane ${params.paneId} has been killed`,
-            metadata: { success: true },
+            metadata: { sessions: [] },
           }
         }
 
@@ -217,13 +217,12 @@ export const TmuxControlTool = Tool.define("tmux_control", {
           }
           const content = await service.capturePaneContent(
             params.paneId,
-            params.lines || 200,
-            params.colors || false
+            params.lines || 200
           )
           return {
             title: "Pane Content",
             output: content || "No content captured",
-            metadata: { content },
+            metadata: { sessions: [] },
           }
         }
 
@@ -248,14 +247,14 @@ export const TmuxControlTool = Tool.define("tmux_control", {
             return {
               title: "Command Executed",
               output: `${modeText}.\n\nStatus tracking is disabled.\nUse capture-pane with paneId '${params.paneId}' to verify the command outcome.\n\nCommand ID: ${commandId}`,
-              metadata: { commandId, rawMode: true },
+              metadata: { sessions: [] },
             }
           }
 
           return {
             title: "Command Started",
             output: `Command execution started.\n\nCommand ID: ${commandId}\n\nUse get-command-result with commandId to check status and output.`,
-            metadata: { commandId, rawMode: false },
+            metadata: { sessions: [] },
           }
         }
 
@@ -269,7 +268,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
             return {
               title: "Command Not Found",
               output: `Command not found: ${params.commandId}`,
-              metadata: { found: false },
+              metadata: { sessions: [] },
             }
           }
 
@@ -287,7 +286,7 @@ export const TmuxControlTool = Tool.define("tmux_control", {
           return {
             title: "Command Result",
             output: resultText,
-            metadata: { command },
+            metadata: { sessions: [] },
           }
         }
 

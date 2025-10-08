@@ -1,0 +1,66 @@
+# Docker Compose example with tmux support
+
+version: '3.8'
+
+services:
+  # Main application container
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.tmux
+    volumes:
+      - workspace:/workspace
+      - shared:/shared  # Shared volume for tmux socket
+    environment:
+      - TMUX_ENABLED=true
+      - TMUX_SOCKET=/shared/tmux.sock
+      - TMUX_SESSION=agent
+      - TMUX_GROUP=miniapp
+    user: "1000:1001"  # uid:gid (1001=miniapp group)
+    networks:
+      - app-network
+
+  # OpenCode sidecar
+  opencode:
+    image: opencode:latest
+    volumes:
+      - workspace:/workspace
+      - shared:/shared  # Same socket volume
+    environment:
+      - TMUX_ENABLED=true
+      - TMUX_SOCKET=/shared/tmux.sock
+      - TMUX_SESSION=agent
+    user: "1000:1001"  # Must match app container
+    networks:
+      - app-network
+    depends_on:
+      - app
+
+  # Optional: Debug container for tmux access
+  debug:
+    image: ubuntu:22.04
+    command: sleep infinity
+    volumes:
+      - workspace:/workspace
+      - shared:/shared
+    user: "1000:1001"
+    networks:
+      - app-network
+    profiles:
+      - debug
+
+volumes:
+  workspace:
+    driver: local
+  shared:
+    driver: local  # In-memory would be ideal but not all drivers support it
+
+networks:
+  app-network:
+    driver: bridge
+
+# Usage:
+#   docker-compose up -d
+#   docker-compose exec app tmux -S /shared/tmux.sock attach -t agent
+#   docker-compose --profile debug up -d debug
+#   docker-compose exec debug tmux -S /shared/tmux.sock attach -t agent

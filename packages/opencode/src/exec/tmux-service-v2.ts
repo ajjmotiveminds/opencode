@@ -255,8 +255,7 @@ export class TmuxServiceV2 {
 
   async capturePaneContent(
     paneId: string,
-    lines: number = 200,
-    includeColors: boolean = false
+    lines: number = 200
   ): Promise<string> {
     try {
       // Always use -e flag to capture escape sequences (including OSC-133 markers)
@@ -375,7 +374,7 @@ export class TmuxServiceV2 {
     }
 
     // Capture a generous slice of history
-    const content = await this.capturePaneContent(cmd.paneId, 5000, false)
+    const content = await this.capturePaneContent(cmd.paneId, 5000)
 
     const parsed = parseLastCommandViaOSC133(content)
     if (!parsed.found) {

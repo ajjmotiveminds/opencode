@@ -104,7 +104,7 @@ export class TmuxExecutorV2 implements CommandExecutor {
           await Bun.sleep(POLL_INTERVAL)
 
           // Capture current pane content
-          const currentContent = await this.service.capturePaneContent(paneId, 1000, false)
+          const currentContent = await this.service.capturePaneContent(paneId, 1000)
           
           // Detect content change for streaming
           if (currentContent !== lastContent) {
@@ -129,7 +129,7 @@ export class TmuxExecutorV2 implements CommandExecutor {
               // log.info("No output change for", { timeSinceLastChange }, "- assuming command complete")
               
               // Capture final pane content
-              const finalContent = await this.service.capturePaneContent(paneId, 1000, false)
+              const finalContent = await this.service.capturePaneContent(paneId, 1000)
               
               onExit?.(0)  // We don't know the real exit code without OSC-133
               
@@ -148,7 +148,7 @@ export class TmuxExecutorV2 implements CommandExecutor {
           await Bun.sleep(200) // Wait for Ctrl-C to take effect
           
           // Capture final pane content
-          const finalContent = await this.service.capturePaneContent(paneId, 1000, false)
+          const finalContent = await this.service.capturePaneContent(paneId, 1000)
           
           return resolve({
             combined: finalContent + `\n\n[Command timed out after ${timeoutMs / 1000}s]`,

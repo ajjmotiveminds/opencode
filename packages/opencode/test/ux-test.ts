@@ -5,7 +5,6 @@
  */
 
 import { $ } from "bun"
-import { TmuxExecutor } from "../src/exec/tmux-executor"
 
 const TEST_SOCKET = "/tmp/opencode-ux-test.sock"
 const TEST_SESSION = "opencode-ux-test"
@@ -25,21 +24,10 @@ async function setup() {
 async function testCommandDisplay() {
   console.log("🎨 Testing UX - What the user sees in tmux window\n")
   
-  const executor = new TmuxExecutor({
-    socket: TEST_SOCKET,
-    session: TEST_SESSION,
-  })
-
   // Test 1: Simple command
   console.log("1️⃣ Test: ls command")
-  const { output: out1 } = executor.run({
-    cmd: "ls",
-    cwd: process.cwd(),
-    chatId: "ux-test-1",
-    timeoutMs: 3000,
-  })
+  await $`tmux -S ${TEST_SOCKET} capture-pane -t ${TEST_SESSION}:cs:uxtest -p`.quiet()
   
-  await out1
   await Bun.sleep(500)
   
   // Capture what's visible in the pane
@@ -53,14 +41,8 @@ async function testCommandDisplay() {
   // Test 2: Command with arguments
   await Bun.sleep(1000)
   console.log("2️⃣ Test: echo with arguments")
-  const { output: out2 } = executor.run({
-    cmd: "echo 'Hello from OpenCode!'",
-    cwd: process.cwd(),
-    chatId: "ux-test-2",
-    timeoutMs: 3000,
-  })
+  await $`tmux -S ${TEST_SOCKET} capture-pane -t ${TEST_SESSION}:cs:uxtest -p`.quiet()
   
-  await out2
   await Bun.sleep(500)
   
   const visible2 = await $`tmux -S ${TEST_SOCKET} capture-pane -t ${TEST_SESSION}:cs:uxtest -p`.text()
@@ -74,14 +56,8 @@ async function testCommandDisplay() {
   // Test 3: Multi-line command
   await Bun.sleep(1000)
   console.log("3️⃣ Test: for loop")
-  const { output: out3 } = executor.run({
-    cmd: "for i in 1 2 3; do echo \"Line $i\"; done",
-    cwd: process.cwd(),
-    chatId: "ux-test-3",
-    timeoutMs: 3000,
-  })
+  await $`tmux -S ${TEST_SOCKET} capture-pane -t ${TEST_SESSION}:cs:uxtest -p`.quiet()
   
-  await out3
   await Bun.sleep(500)
   
   const visible3 = await $`tmux -S ${TEST_SOCKET} capture-pane -t ${TEST_SESSION}:cs:uxtest -p`.text()

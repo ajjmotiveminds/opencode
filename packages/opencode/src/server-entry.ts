@@ -3,7 +3,6 @@
 // Server-only entrypoint for Docker container
 // This bypasses the CLI and starts the server directly
 
-import { serve } from "bun";
 import { Server } from "./server/server";
 
 // Default server configuration

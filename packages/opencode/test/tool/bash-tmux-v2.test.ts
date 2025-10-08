@@ -475,14 +475,14 @@ describe("exec.tmux-service-v2", () => {
       session: TEST_TMUX_SESSION,
     })
 
-    const windowId = await service.ensureWindow(TEST_TMUX_SESSION, "capture-test")
+    await service.ensureWindow(TEST_TMUX_SESSION, "capture-test")
     const paneId = await service.getPaneId(TEST_TMUX_SESSION, "capture-test")
 
     // Send a command to create some content
     await service.executeCommand(paneId, "echo 'capture test'", false, false)
     await Bun.sleep(1000)
 
-    const content = await service.capturePaneContent(paneId, 100, false)
+    const content = await service.capturePaneContent(paneId, 100)
     expect(content).toBeTruthy()
   })
 
