@@ -1,5 +1,5 @@
 import { BashTool } from "./bash"
-import { BashTmuxTool } from "./bash-tmux"
+import { BashTmuxToolV2 } from "./bash-tmux-v2"
 import { EditTool } from "./edit"
 import { GlobTool } from "./glob"
 import { GrepTool } from "./grep"
@@ -11,6 +11,7 @@ import { TodoWriteTool, TodoReadTool } from "./todo"
 import { WebFetchTool } from "./webfetch"
 import { WriteTool } from "./write"
 import { InvalidTool } from "./invalid"
+import { TmuxControlTool } from "./tmux-control"
 import { Tmux } from "../exec/tmux-config"
 import type { Agent } from "../agent/agent"
 import { Tool } from "./tool"
@@ -78,9 +79,11 @@ export namespace ToolRegistry {
     const custom = await state().then((x) => x.custom)
     
     // Use tmux tool if enabled, otherwise use standard bash tool
-    const bashTool = Tmux.isEnabled() ? BashTmuxTool : BashTool
+    // Use V2 implementation by default when tmux is enabled
+    const bashTool = Tmux.isEnabled() ? BashTmuxToolV2 : BashTool
     
-    return [
+    // Base tools
+    const tools: Tool.Info[] = [
       InvalidTool,
       bashTool,
       EditTool,
@@ -94,8 +97,14 @@ export namespace ToolRegistry {
       TodoWriteTool,
       TodoReadTool,
       TaskTool,
-      ...custom,
     ]
+    
+    // Add tmux control tool if enabled via env var
+    if (process.env["TMUX_TOOL_ENABLED"] === "true") {
+      tools.push(TmuxControlTool)
+    }
+    
+    return [...tools, ...custom]
   }
 
   export async function ids() {
