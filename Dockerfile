@@ -1,51 +1,90 @@
-# Use multi-stage build to keep final image small
-FROM oven/bun:1.2 AS builder
+# Build stage
+FROM oven/bun:latest AS builder
 
-# Install build dependencies
-RUN apt-get update && \
-    apt-get install -y bash curl make python3 git && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-# Install Go
-RUN bash <<'EOF'
-set -euo pipefail
-case "${TARGETARCH:-amd64}" in
-  amd64) GOARCH=amd64 ;;
-  arm64) GOARCH=arm64 ;;
-  *) echo "Unsupported TARGETARCH: ${TARGETARCH}"; exit 1;;
-esac
-curl -fsSL "https://go.dev/dl/go1.21.5.linux-${GOARCH}.tar.gz" \
-  | tar -C /usr/local -xzf -
-echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile.d/go.sh
-EOF
-ENV PATH="/usr/local/go/bin:${PATH}"
+# Install git for cloning dependencies
+# RUN apk add --no-cache git
+RUN apt-get update && apt-get install -y git python3 make libvips curl build-essential nodejs tmux npm && rm -rf /var/lib/apt/lists/*
 
-# Copy source and build
-RUN git clone https://github.com/ajjmotiveminds/opencode.git /app/opencode
-# RUN mkdir -p /app/opencode && git clone https://github.com/ajjmotiveminds/opencode.git /app/opencode
-WORKDIR /app/opencode
-RUN bun install --ignore-scripts --no-progress
-RUN export PATH=$PATH:/usr/local/go/bin && bun run packages/opencode/script/build.ts
+# Set Go version
+ENV GO_VERSION=1.24.0
 
-# Final runtime stage - much smaller
-FROM oven/bun:slim AS runtime
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates curl tar xz-utils; \
+    rm -rf /var/lib/apt/lists/*; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+      amd64) goarch=amd64 ;; \
+      arm64) goarch=arm64 ;; \
+      *) echo "Unsupported arch: $arch" >&2; exit 1 ;; \
+    esac; \
+    url="https://go.dev/dl/go${GO_VERSION}.linux-${goarch}.tar.gz"; \
+    curl -fsSL "${url}" -o /tmp/go.tgz; \
+    rm -rf /usr/local/go; \
+    tar -C /usr/local -xzf /tmp/go.tgz; \
+    rm /tmp/go.tgz
 
-# Only copy the built binaries, not the source
-COPY --from=builder /app/opencode/packages/opencode/dist/opencode-linux-x64/bin/opencode /usr/local/bin/opencode
+# Minimal env; append GOPATH/bin to PATH
+ENV GOROOT=/usr/local/go \
+    GOPATH=/root/go \
+    PATH=/usr/local/go/bin:/root/go/bin:$PATH
 
-# Set up PATH
-ENV PATH="/usr/local/bin:$PATH"
 
-# Create entrypoint
-RUN echo '#!/bin/bash\n\
-set -e\n\
-if [ $# -eq 0 ]; then\n\
-    echo "Starting opencode interactive session..."\n\
-    echo "Use opencode commands like: opencode --help"\n\
-    exec bash\n\
-fi\n\
-exec opencode "$@"' > /usr/local/bin/opencode-entrypoint.sh && \
-    chmod +x /usr/local/bin/opencode-entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/opencode-entrypoint.sh"]
-CMD []
+COPY . .
+
+
+ENV BUN_JOBS=1 \
+    npm_config_loglevel=silly \
+    npm_config_jobs=1 \
+    MAKEFLAGS=-j1 \
+    PYTHONUNBUFFERED=1
+
+
+
+
+RUN  npm install -g node-gyp
+RUN bun install --ci --no-progress  --verbose
+
+RUN /bin/bash -c "cd packages/opencode && bun run build"
+
+ 
+
+# --- Production (POC) ---
+FROM oven/bun:1.1.30-alpine AS runtime
+
+# Tools we actually use
+RUN apk add --no-cache bash tmux tini ca-certificates
+
+# App dir
+WORKDIR /app
+
+# Arch-specific binary (buildx sets TARGETARCH = amd64|arm64)
+ARG TARGETARCH
+RUN echo "Target architecture: ${TARGETARCH}"
+
+# Copy your built binary
+RUN mkdir -p /app/bin
+COPY --from=builder /app/packages/opencode/dist/opencode-linux-${TARGETARCH}/bin/opencode /app/bin/opencode
+COPY --from=builder /app/packages/opencode/package.json /app/
+
+# PATH
+ENV PATH="/app/bin:${PATH}"
+
+# Shared dir for tmux socket (mounted from host). Go wide-open (POC).
+RUN mkdir -p /shared && chmod 0777 /shared
+
+# tmux/env defaults
+ENV TMUX_SOCKET=/shared/tmux.sock \
+    TMUX_SESSION=agent \
+    TMUX_ENABLED=true \
+    NODE_ENV=production
+
+# tini as PID1 so Ctrl-C & signals work
+ENTRYPOINT ["/sbin/tini","--","/app/bin/opencode"]
+CMD ["serve","--port","4096","--host","0.0.0.0"]
+
+# optional (clean shutdowns)
+STOPSIGNAL SIGTERM
